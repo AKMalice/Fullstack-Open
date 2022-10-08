@@ -5,7 +5,6 @@ const cors = require('cors')
 const PORT = process.env.PORT || 3001
 app.use(cors())
 app.use(express.json())
-app.use(express.static('build'))
 
 app.use(morgan((tokens, req, res) => {
     return [
