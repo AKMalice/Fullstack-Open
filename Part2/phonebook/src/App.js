@@ -49,6 +49,9 @@ const App = () => {
     console.log("saved successfully")
     setNewNotification([`${response.data.name} Added successfully`,0])
     setTimeout(()=>{setNewNotification([null,0])},2000)
+  }).catch(error=>{
+    setNewNotification([error.response.data.error,1])
+    setTimeout(()=>{setNewNotification([null,0])},3000)
   })
   }
   }
