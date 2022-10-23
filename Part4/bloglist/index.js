@@ -4,25 +4,41 @@ const app = express()
 const cors = require('cors')
 const Blog = require('./models/blog')
 const Config = require('./utils/config')
+require('express-async-errors')
+const bodyParser = require('body-parser')
+const logger = require('./utils/logger')
+const blogRouter = require('./controllers/blogs')
+const usersRouter = require('./controllers/users')
+const loginRouter = require('./controllers/login')
+const middleware = require('./utils/middleware')
+const mongoose = require('mongoose')
 
+const url = Config.URL
+logger.info('connecting to', url)
+
+mongoose.connect(url, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => {
+    logger.info('succeffully connected to MongoDB')
+  }).catch((error) => {
+    logger.info('error when connecting to MongoDB:', error.message)
+  })
+
+morgan.token('body', function (req) { return JSON.stringify(req.body) })
+
+app.use(bodyParser.json())
 app.use(cors())
-app.use(express.json())
+app.use('/api/login', loginRouter)
+app.use('/api/users', usersRouter)
 
-app.get('/api/blogs', (request, response) => {
+if (process.env.NODE_ENV === 'test') {
+  const testingRouter = require('./controllers/testing')
+  app.use('/api/testing', testingRouter)
+}
 
-  Blog.find({}).then(blogs => {
-      response.json(blogs)
-    })
-})
-
-app.post('/api/blogs', (request, response) => {
-
-  const blog = new Blog(request.body)
-
-  blog.save().then(result => {
-      response.status(201).json(result)
-    })
-})
+app.use(middleware.tokenExtractor)
+app.use(middleware.tokenValidator)
+app.use('/api/blogs', blogRouter)
+app.use(middleware.errorHandler)
 
 app.listen(Config.PORT, () => {
   console.log(`Server running on port ${Config.PORT}`)
